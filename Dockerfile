@@ -1,5 +1,5 @@
 FROM python:3.8-alpine
-MAINTAINER kalaLokia
+LABEL maintainer="kalaLokia"
 
 ENV PYTHONUNBUFFERED 1
 
