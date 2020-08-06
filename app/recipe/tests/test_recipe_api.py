@@ -1,5 +1,6 @@
 import tempfile
 import os
+
 from PIL import Image
 
 from django.contrib.auth import get_user_model
@@ -208,7 +209,7 @@ class RecipeImageUploadTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.user = get_user_model().objects.create_user(
-            'user@kalalokia.com'
+            'test@kalalokia.com',
             'testpass'
         )
         self.client.force_authenticate(self.user)
@@ -225,7 +226,7 @@ class RecipeImageUploadTests(TestCase):
             img.save(ntf, format='JPEG')
             ntf.seek(0)
             res = self.client.post(url, {'image': ntf}, format='multipart')
-        
+
         self.recipe.refresh_from_db()
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn('image', res.data)
