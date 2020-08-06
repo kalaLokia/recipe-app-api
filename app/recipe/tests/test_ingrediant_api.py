@@ -5,7 +5,7 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Ingrediant
+from core.models import Ingrediant, Recipe
 
 from recipe.serializers import IngrediantSerializer
 
@@ -81,3 +81,45 @@ class PrivateIngrediantApiTests(TestCase):
         res = self.client.post(INGREDIANT_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_retrieve_ingrediants_assigned_to_recipes(self):
+        """Test filtering tags by those assigned to recipes"""
+        ingrediant1 = Ingrediant.objects.create(user=self.user, name='Chilly')
+        ingrediant2 = Ingrediant.objects.create(user=self.user, name='Sugar')
+        recipe = Recipe.objects.create(
+            title='Egg burjjy',
+            time_minutes=7,
+            price=30,
+            user=self.user
+        )
+        recipe.ingrediants.add(ingrediant1)
+
+        res = self.client.get(INGREDIANT_URL, {'assigned_only': 1})
+
+        serializer1 = IngrediantSerializer(ingrediant1)
+        serializer2 = IngrediantSerializer(ingrediant2)
+        self.assertIn(serializer1.data, res.data)
+        self.assertNotIn(serializer2.data, res.data)
+
+    def test_retireve_unique_ingrediants(self):
+        """Test filtering ingrediants by assigned returns unique items"""
+        ingrediant = Ingrediant.objects.create(user=self.user, name='Chilly')
+        Ingrediant.objects.create(user=self.user, name='Tomato')
+        recipe1 = Recipe.objects.create(
+            title='Egg burjjy',
+            time_minutes=7,
+            price=30,
+            user=self.user
+        )
+        recipe1.ingrediants.add(ingrediant)
+        recipe2 = Recipe.objects.create(
+            title='Chicken chukka',
+            time_minutes=29,
+            price=130,
+            user=self.user
+        )
+        recipe2.ingrediants.add(ingrediant)
+
+        res = self.client.get(INGREDIANT_URL, {'assigned_only': 1})
+
+        self.assertEqual(len(res.data), 1)
